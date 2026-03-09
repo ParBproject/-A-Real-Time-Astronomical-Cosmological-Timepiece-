@@ -1,0 +1,64 @@
+{
+  "zodiac": [
+    {"name": "Aries", "symbol": "♈", "ra_center": 2.5, "dec_center": 20, "sun_entry_approx": "Mar 21"},
+    {"name": "Taurus", "symbol": "♉", "ra_center": 4.7, "dec_center": 16, "sun_entry_approx": "Apr 20"},
+    {"name": "Gemini", "symbol": "♊", "ra_center": 7.0, "dec_center": 22, "sun_entry_approx": "May 21"},
+    {"name": "Cancer", "symbol": "♋", "ra_center": 8.6, "dec_center": 20, "sun_entry_approx": "Jun 21"},
+    {"name": "Leo", "symbol": "♌", "ra_center": 10.7, "dec_center": 15, "sun_entry_approx": "Jul 23"},
+    {"name": "Virgo", "symbol": "♍", "ra_center": 13.4, "dec_center": -4, "sun_entry_approx": "Aug 23"},
+    {"name": "Libra", "symbol": "♎", "ra_center": 15.2, "dec_center": -15, "sun_entry_approx": "Sep 23"},
+    {"name": "Scorpius", "symbol": "♏", "ra_center": 16.9, "dec_center": -30, "sun_entry_approx": "Oct 23"},
+    {"name": "Sagittarius", "symbol": "♐", "ra_center": 19.1, "dec_center": -25, "sun_entry_approx": "Nov 22"},
+    {"name": "Capricornus", "symbol": "♑", "ra_center": 21.0, "dec_center": -20, "sun_entry_approx": "Dec 22"},
+    {"name": "Aquarius", "symbol": "♒", "ra_center": 22.3, "dec_center": -11, "sun_entry_approx": "Jan 20"},
+    {"name": "Pisces", "symbol": "♓", "ra_center": 1.0, "dec_center": 15, "sun_entry_approx": "Feb 19"}
+  ],
+  "bright_stars": [
+    {"name": "Sirius", "constellation": "Canis Major", "ra": 6.75, "dec": -16.72, "mag": -1.46, "color": "#A8D8FF"},
+    {"name": "Canopus", "constellation": "Carina", "ra": 6.40, "dec": -52.70, "mag": -0.74, "color": "#FFFFCC"},
+    {"name": "Arcturus", "constellation": "Boötes", "ra": 14.26, "dec": 19.18, "mag": -0.05, "color": "#FFCC66"},
+    {"name": "Vega", "constellation": "Lyra", "ra": 18.62, "dec": 38.78, "mag": 0.03, "color": "#CCDDFF"},
+    {"name": "Capella", "constellation": "Auriga", "ra": 5.28, "dec": 45.99, "mag": 0.08, "color": "#FFFF99"},
+    {"name": "Rigel", "constellation": "Orion", "ra": 5.24, "dec": -8.20, "mag": 0.13, "color": "#BBCCFF"},
+    {"name": "Procyon", "constellation": "Canis Minor", "ra": 7.66, "dec": 5.22, "mag": 0.38, "color": "#FFFDD0"},
+    {"name": "Betelgeuse", "constellation": "Orion", "ra": 5.92, "dec": 7.41, "mag": 0.42, "color": "#FF6633"},
+    {"name": "Achernar", "constellation": "Eridanus", "ra": 1.63, "dec": -57.24, "mag": 0.46, "color": "#AACCFF"},
+    {"name": "Hadar", "constellation": "Centaurus", "ra": 14.06, "dec": -60.37, "mag": 0.61, "color": "#BBCCFF"},
+    {"name": "Altair", "constellation": "Aquila", "ra": 19.85, "dec": 8.87, "mag": 0.77, "color": "#DDEEFF"},
+    {"name": "Acrux", "constellation": "Crux", "ra": 12.44, "dec": -63.10, "mag": 0.77, "color": "#CCDDFF"},
+    {"name": "Aldebaran", "constellation": "Taurus", "ra": 4.60, "dec": 16.51, "mag": 0.86, "color": "#FF9944"},
+    {"name": "Spica", "constellation": "Virgo", "ra": 13.42, "dec": -11.16, "mag": 0.97, "color": "#AABBFF"},
+    {"name": "Antares", "constellation": "Scorpius", "ra": 16.49, "dec": -26.43, "mag": 1.06, "color": "#FF4422"},
+    {"name": "Pollux", "constellation": "Gemini", "ra": 7.75, "dec": 28.03, "mag": 1.14, "color": "#FFAA66"},
+    {"name": "Fomalhaut", "constellation": "Piscis Austrinus", "ra": 22.96, "dec": -29.62, "mag": 1.16, "color": "#DDEEFF"},
+    {"name": "Deneb", "constellation": "Cygnus", "ra": 20.69, "dec": 45.28, "mag": 1.25, "color": "#DDEEFF"},
+    {"name": "Mimosa", "constellation": "Crux", "ra": 12.80, "dec": -59.69, "mag": 1.25, "color": "#AABBFF"},
+    {"name": "Regulus", "constellation": "Leo", "ra": 10.14, "dec": 11.97, "mag": 1.35, "color": "#BBDDFF"},
+    {"name": "Castor", "constellation": "Gemini", "ra": 7.58, "dec": 31.89, "mag": 1.58, "color": "#DDEEFF"},
+    {"name": "Bellatrix", "constellation": "Orion", "ra": 5.42, "dec": 6.35, "mag": 1.64, "color": "#BBDDFF"},
+    {"name": "Elnath", "constellation": "Taurus", "ra": 5.44, "dec": 28.61, "mag": 1.65, "color": "#CCDDFF"},
+    {"name": "Miaplacidus", "constellation": "Carina", "ra": 9.22, "dec": -69.72, "mag": 1.67, "color": "#DDEEFF"},
+    {"name": "Alnilam", "constellation": "Orion", "ra": 5.60, "dec": -1.20, "mag": 1.70, "color": "#AABBFF"},
+    {"name": "Alnitak", "constellation": "Orion", "ra": 5.68, "dec": -1.94, "mag": 1.74, "color": "#BBCCFF"},
+    {"name": "Regor", "constellation": "Vela", "ra": 8.16, "dec": -47.34, "mag": 1.75, "color": "#CCDDFF"},
+    {"name": "Alioth", "constellation": "Ursa Major", "ra": 12.90, "dec": 55.96, "mag": 1.76, "color": "#DDEEFF"},
+    {"name": "Kaus Australis", "constellation": "Sagittarius", "ra": 18.40, "dec": -34.38, "mag": 1.79, "color": "#FFCC88"},
+    {"name": "Mirfak", "constellation": "Perseus", "ra": 3.41, "dec": 49.86, "mag": 1.80, "color": "#FFEECC"},
+    {"name": "Dubhe", "constellation": "Ursa Major", "ra": 11.06, "dec": 61.75, "mag": 1.81, "color": "#FFBB88"},
+    {"name": "Wezen", "constellation": "Canis Major", "ra": 7.14, "dec": -26.39, "mag": 1.83, "color": "#FFEECC"},
+    {"name": "Alkaid", "constellation": "Ursa Major", "ra": 13.79, "dec": 49.31, "mag": 1.85, "color": "#BBCCFF"},
+    {"name": "Polaris", "constellation": "Ursa Minor", "ra": 2.53, "dec": 89.26, "mag": 2.02, "color": "#FFEEDD"}
+  ],
+  "orion_belt": {
+    "stars": ["Alnitak", "Alnilam", "Mintaka"],
+    "description": "The most recognizable asterism in the night sky, pointing toward Sirius and the Pleiades."
+  },
+  "summer_triangle": {
+    "stars": ["Vega", "Altair", "Deneb"],
+    "description": "A prominent asterism visible in summer Northern Hemisphere skies."
+  },
+  "southern_cross": {
+    "stars": ["Acrux", "Mimosa", "Gacrux", "Imai"],
+    "description": "The Southern Cross, symbol of the southern hemisphere sky."
+  }
+}

@@ -1,0 +1,362 @@
+[
+  {
+    "name": "Big Bang",
+    "age_bya": 13.8,
+    "category": "cosmological",
+    "icon": "💥",
+    "description": "The universe begins from an infinitely dense singularity. Space, time, matter, and energy spring into existence.",
+    "color": "#FF6B35"
+  },
+  {
+    "name": "Cosmic Inflation",
+    "age_bya": 13.7999,
+    "category": "cosmological",
+    "icon": "🌌",
+    "description": "The universe expands exponentially in a fraction of a second, growing from subatomic to macroscopic scales.",
+    "color": "#FF8C42"
+  },
+  {
+    "name": "Quark Era Ends",
+    "age_bya": 13.7998,
+    "category": "cosmological",
+    "icon": "⚛️",
+    "description": "Quarks bind together to form protons and neutrons. The fundamental building blocks of matter solidify.",
+    "color": "#FFA726"
+  },
+  {
+    "name": "First Atoms Form",
+    "age_bya": 13.42,
+    "category": "cosmological",
+    "icon": "🔵",
+    "description": "380,000 years after the Big Bang, the universe cools enough for electrons to bind to nuclei. The universe becomes transparent for the first time.",
+    "color": "#66BB6A"
+  },
+  {
+    "name": "Cosmic Dark Ages",
+    "age_bya": 13.4,
+    "category": "cosmological",
+    "icon": "🌑",
+    "description": "The universe is dark and formless — no stars yet, just a slowly cooling fog of hydrogen and helium.",
+    "color": "#455A64"
+  },
+  {
+    "name": "First Stars Born",
+    "age_bya": 13.5,
+    "category": "stellar",
+    "icon": "⭐",
+    "description": "Population III stars ignite — massive, brilliant, and short-lived. They forge the first heavy elements in their cores.",
+    "color": "#FFF176"
+  },
+  {
+    "name": "First Galaxies Form",
+    "age_bya": 13.2,
+    "category": "stellar",
+    "icon": "🌀",
+    "description": "Gravity pulls matter into the first protogalaxies. The cosmic web begins to take shape.",
+    "color": "#CE93D8"
+  },
+  {
+    "name": "Reionization Era",
+    "age_bya": 12.8,
+    "category": "cosmological",
+    "icon": "💡",
+    "description": "Ultraviolet light from early stars and quasars ionizes the intergalactic medium. The universe becomes fully transparent.",
+    "color": "#80DEEA"
+  },
+  {
+    "name": "Milky Way Forms",
+    "age_bya": 10.0,
+    "category": "stellar",
+    "icon": "🌌",
+    "description": "Our galaxy assembles over billions of years from merging smaller galaxies and accreted gas clouds.",
+    "color": "#A5D6A7"
+  },
+  {
+    "name": "Solar System Forms",
+    "age_bya": 4.6,
+    "category": "solar",
+    "icon": "☀️",
+    "description": "A molecular cloud collapses to form the Sun. A protoplanetary disk of gas and dust swirls around it, seeding the planets.",
+    "color": "#FFD54F"
+  },
+  {
+    "name": "Earth Forms",
+    "age_bya": 4.54,
+    "category": "solar",
+    "icon": "🌍",
+    "description": "Planetesimals collide and accrete to form a young, molten Earth. The Moon forms from a giant impact with a Mars-sized body.",
+    "color": "#4FC3F7"
+  },
+  {
+    "name": "Late Heavy Bombardment",
+    "age_bya": 4.1,
+    "category": "solar",
+    "icon": "☄️",
+    "description": "The inner solar system is pelted by asteroids and comets, potentially delivering water and organic molecules to Earth.",
+    "color": "#FF7043"
+  },
+  {
+    "name": "First Life on Earth",
+    "age_bya": 3.8,
+    "category": "life",
+    "icon": "🦠",
+    "description": "Simple single-celled organisms appear in Earth's oceans. Life's 4-billion-year journey begins.",
+    "color": "#81C784"
+  },
+  {
+    "name": "Photosynthesis Evolves",
+    "age_bya": 3.4,
+    "category": "life",
+    "icon": "🌿",
+    "description": "Cyanobacteria evolve photosynthesis, slowly pumping oxygen into the atmosphere and transforming Earth forever.",
+    "color": "#AED581"
+  },
+  {
+    "name": "Great Oxidation Event",
+    "age_bya": 2.4,
+    "category": "life",
+    "icon": "💨",
+    "description": "Atmospheric oxygen rises dramatically, killing most anaerobic life but enabling complex aerobic organisms.",
+    "color": "#4DD0E1"
+  },
+  {
+    "name": "Eukaryotic Cells",
+    "age_bya": 2.1,
+    "category": "life",
+    "icon": "🔬",
+    "description": "Cells with a nucleus and organelles emerge — a quantum leap in biological complexity.",
+    "color": "#9CCC65"
+  },
+  {
+    "name": "Multicellular Life",
+    "age_bya": 0.8,
+    "category": "life",
+    "icon": "🐛",
+    "description": "Simple multicellular organisms appear. For the first time, cells cooperate to form a unified organism.",
+    "color": "#26C6DA"
+  },
+  {
+    "name": "Cambrian Explosion",
+    "age_bya": 0.541,
+    "category": "life",
+    "icon": "🦀",
+    "description": "In just 20 million years, most major animal body plans appear. The fossil record explodes with diversity.",
+    "color": "#FF8A65"
+  },
+  {
+    "name": "First Land Plants",
+    "age_bya": 0.47,
+    "category": "life",
+    "icon": "🌱",
+    "description": "Plants colonize dry land, transforming barren rock into lush ecosystems and beginning to terraform the planet.",
+    "color": "#66BB6A"
+  },
+  {
+    "name": "Age of Fish",
+    "age_bya": 0.42,
+    "category": "life",
+    "icon": "🐟",
+    "description": "The Devonian period — vertebrates diversify explosively in the oceans. The first fish with jaws emerge.",
+    "color": "#42A5F5"
+  },
+  {
+    "name": "First Forests",
+    "age_bya": 0.385,
+    "category": "life",
+    "icon": "🌲",
+    "description": "Dense forests of giant tree ferns cover the continents. Atmospheric oxygen peaks, enabling giant insects.",
+    "color": "#2E7D32"
+  },
+  {
+    "name": "First Reptiles",
+    "age_bya": 0.315,
+    "category": "life",
+    "icon": "🦎",
+    "description": "Amniote eggs evolve, freeing vertebrates from water for reproduction. Reptiles begin their conquest of land.",
+    "color": "#8D6E63"
+  },
+  {
+    "name": "Great Dying",
+    "age_bya": 0.252,
+    "category": "life",
+    "icon": "💀",
+    "description": "The Permian-Triassic extinction — 96% of all marine species and 70% of land vertebrates perish. Life nearly ends.",
+    "color": "#E53935"
+  },
+  {
+    "name": "Age of Dinosaurs",
+    "age_bya": 0.23,
+    "category": "life",
+    "icon": "🦕",
+    "description": "Dinosaurs rise to dominance following the Triassic extinction. They will reign for 165 million years.",
+    "color": "#8BC34A"
+  },
+  {
+    "name": "First Mammals",
+    "age_bya": 0.225,
+    "category": "life",
+    "icon": "🐭",
+    "description": "Small, shrew-like mammals emerge alongside the dinosaurs, living in their shadow for 160 million years.",
+    "color": "#A1887F"
+  },
+  {
+    "name": "First Flowering Plants",
+    "age_bya": 0.13,
+    "category": "life",
+    "icon": "🌸",
+    "description": "Angiosperms evolve and rapidly diversify, transforming Earth's ecosystems and co-evolving with insects.",
+    "color": "#F48FB1"
+  },
+  {
+    "name": "Chicxulub Impact",
+    "age_bya": 0.066,
+    "category": "life",
+    "icon": "☄️",
+    "description": "A 10-km asteroid strikes Mexico. The resulting nuclear winter kills 75% of all species, including non-avian dinosaurs.",
+    "color": "#FF5722"
+  },
+  {
+    "name": "Mammals Diversify",
+    "age_bya": 0.065,
+    "category": "life",
+    "icon": "🦣",
+    "description": "With dinosaurs gone, mammals rapidly diversify into the ecological niches left vacant, including the ancestors of whales, bats, and primates.",
+    "color": "#FF8A65"
+  },
+  {
+    "name": "First Primates",
+    "age_bya": 0.055,
+    "category": "human",
+    "icon": "🐒",
+    "description": "Small, tree-dwelling primates appear. Forward-facing eyes, grasping hands — the first hints of the human lineage.",
+    "color": "#FFCC80"
+  },
+  {
+    "name": "Grasslands Spread",
+    "age_bya": 0.023,
+    "category": "human",
+    "icon": "🌾",
+    "description": "Earth cools. Vast grasslands replace forests. This sets the stage for the evolution of bipedal apes on the African savanna.",
+    "color": "#D4E157"
+  },
+  {
+    "name": "First Hominins",
+    "age_bya": 0.007,
+    "category": "human",
+    "icon": "🦴",
+    "description": "The human and chimpanzee lineages diverge. Our ancestors begin walking upright on the African savanna.",
+    "color": "#FFAB40"
+  },
+  {
+    "name": "Homo habilis",
+    "age_bya": 0.0024,
+    "category": "human",
+    "icon": "🪨",
+    "description": "The first stone tools appear. Homo habilis — 'handy man' — begins shaping rocks into cutting instruments.",
+    "color": "#A5D6A7"
+  },
+  {
+    "name": "Homo erectus",
+    "age_bya": 0.0018,
+    "category": "human",
+    "icon": "🔥",
+    "description": "Homo erectus masters fire and spreads from Africa across Asia and Europe — the first great human migration.",
+    "color": "#FFCC02"
+  },
+  {
+    "name": "Modern Humans Emerge",
+    "age_bya": 0.0003,
+    "category": "human",
+    "icon": "🧠",
+    "description": "Homo sapiens appear in Africa ~300,000 years ago. Larger brains, complex language, abstract thought.",
+    "color": "#80CBC4"
+  },
+  {
+    "name": "Cave Art",
+    "age_bya": 0.000045,
+    "category": "human",
+    "icon": "🎨",
+    "description": "Humans paint the walls of Chauvet and Lascaux caves — the birth of art, symbol, and imagination.",
+    "color": "#FFAB40"
+  },
+  {
+    "name": "Agriculture Begins",
+    "age_bya": 0.000012,
+    "category": "human",
+    "icon": "🌾",
+    "description": "The Neolithic Revolution — humans begin farming in the Fertile Crescent, radically transforming human society.",
+    "color": "#A5D6A7"
+  },
+  {
+    "name": "First Cities",
+    "age_bya": 0.000008,
+    "category": "human",
+    "icon": "🏛️",
+    "description": "Uruk, Jericho, Çatalhöyük — the first permanent cities arise. Writing, mathematics, and civilization emerge.",
+    "color": "#F9A825"
+  },
+  {
+    "name": "Writing Invented",
+    "age_bya": 0.0000055,
+    "category": "human",
+    "icon": "✍️",
+    "description": "Sumerian cuneiform — the first writing system. Humanity gains the ability to record and transmit knowledge across generations.",
+    "color": "#80DEEA"
+  },
+  {
+    "name": "Classical Antiquity",
+    "age_bya": 0.0000026,
+    "category": "human",
+    "icon": "🏺",
+    "description": "Ancient Greece and Rome flourish. Philosophy, democracy, mathematics, and science take root.",
+    "color": "#FFD54F"
+  },
+  {
+    "name": "Scientific Revolution",
+    "age_bya": 0.00000045,
+    "category": "human",
+    "icon": "🔭",
+    "description": "Copernicus, Galileo, Newton. Humans discover they live on a pale blue dot orbiting an average star.",
+    "color": "#B3E5FC"
+  },
+  {
+    "name": "Industrial Revolution",
+    "age_bya": 0.00000025,
+    "category": "human",
+    "icon": "⚙️",
+    "description": "Steam power, fossil fuels, and machinery transform human civilization. The pace of change accelerates exponentially.",
+    "color": "#BCAAA4"
+  },
+  {
+    "name": "Space Age Begins",
+    "age_bya": 0.000000066,
+    "category": "human",
+    "icon": "🚀",
+    "description": "Sputnik 1 — humanity reaches orbit for the first time. We become a spacefaring species.",
+    "color": "#82B1FF"
+  },
+  {
+    "name": "Humans on the Moon",
+    "age_bya": 0.000000056,
+    "category": "human",
+    "icon": "🌙",
+    "description": "Apollo 11 — humans set foot on another world for the first time. One small step for man...",
+    "color": "#E8EAF6"
+  },
+  {
+    "name": "Internet Age",
+    "age_bya": 0.000000030,
+    "category": "human",
+    "icon": "🌐",
+    "description": "The World Wide Web connects humanity in a global nervous system. Information becomes instantaneously universal.",
+    "color": "#69F0AE"
+  },
+  {
+    "name": "Present Moment",
+    "age_bya": 0.0,
+    "category": "human",
+    "icon": "⏱️",
+    "description": "You are here. In the last fraction of the last second of the last minute of December 31st of the Cosmic Calendar.",
+    "color": "#FFFFFF"
+  }
+]
