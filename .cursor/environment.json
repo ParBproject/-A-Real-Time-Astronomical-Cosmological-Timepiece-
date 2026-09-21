@@ -1,0 +1,17 @@
+{
+  "name": "Cosmic Clock",
+  "install": "cd /agent/repos/-a-real-time-astronomical-cosmological-timepiece- && pip3 install --break-system-packages -r requirements.txt && python3 -c \"from skyfield.api import load; load('de421.bsp')\"",
+  "terminals": [
+    {
+      "name": "streamlit",
+      "command": "cd /agent/repos/-a-real-time-astronomical-cosmological-timepiece- && python3 -m streamlit run app.py --server.port 8501 --server.address 0.0.0.0 --server.headless true --server.enableCORS false --server.enableXsrfProtection false --browser.gatherUsageStats false",
+      "description": "Runs the Cosmic Clock Streamlit app on http://localhost:8501"
+    }
+  ],
+  "ports": [
+    {
+      "name": "streamlit",
+      "port": 8501
+    }
+  ]
+}
