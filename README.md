@@ -1,5 +1,12 @@
 # Cosmic Clock
 
+## For a data analyst application
+
+**Do not use this as a data analyst sample.** It is a science visualization. The screenshots show the interface; they do not show KPI design, SQL, or a business decision.
+
+<p align="center"><img src="assets/screenshots/01_home.png" alt="Cosmic Clock home" width="100%"></p>
+<p align="center"><img src="assets/screenshots/02_sky_clock.png" alt="Sky map" width="100%"></p>
+
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)](requirements.txt)
 [![Streamlit](https://img.shields.io/badge/Streamlit-Interactive_App-FF4B4B?logo=streamlit&logoColor=white)](app.py)
 [![Astronomy](https://img.shields.io/badge/Astronomy-Skyfield_%7C_Astropy-5b5bd6)](src/astronomy.py)
