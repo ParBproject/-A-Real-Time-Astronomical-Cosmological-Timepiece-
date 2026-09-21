@@ -4,7 +4,7 @@
   "terminals": [
     {
       "name": "streamlit",
-      "command": "cd /agent/repos/-a-real-time-astronomical-cosmological-timepiece- && python3 -m streamlit run app.py --server.port 8501 --server.address 0.0.0.0 --server.headless true",
+      "command": "cd /agent/repos/-a-real-time-astronomical-cosmological-timepiece- && python3 -m streamlit run app.py --server.port 8501 --server.address 0.0.0.0 --server.headless true --server.enableCORS false --server.enableXsrfProtection false --browser.gatherUsageStats false",
       "description": "Runs the Cosmic Clock Streamlit app on http://localhost:8501"
     }
   ],
