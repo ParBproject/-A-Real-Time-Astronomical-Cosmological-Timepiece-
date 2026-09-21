@@ -1,0 +1,16 @@
+{
+  "name": "Cosmic Clock",
+  "install": "pip3 install --break-system-packages -r requirements.txt && python3 -c \"from skyfield.api import load; load('de421.bsp')\"",
+  "terminals": [
+    {
+      "name": "streamlit",
+      "command": "python3 -m streamlit run app.py --server.port 8501 --server.address 0.0.0.0 --server.headless true"
+    }
+  ],
+  "ports": [
+    {
+      "name": "streamlit",
+      "port": 8501
+    }
+  ]
+}

@@ -24,6 +24,9 @@ env/
 .streamlit/secrets.toml
 *.log
 
+# Skyfield ephemeris cache (downloaded at runtime)
+*.bsp
+
 # Editors and operating systems
 .vscode/
 .idea/
