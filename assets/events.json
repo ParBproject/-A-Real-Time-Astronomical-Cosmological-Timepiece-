@@ -25,7 +25,7 @@
   },
   {
     "name": "First Atoms Form",
-    "age_bya": 13.42,
+    "age_bya": 13.79962,
     "category": "cosmological",
     "icon": "🔵",
     "description": "380,000 years after the Big Bang, the universe cools enough for electrons to bind to nuclei. The universe becomes transparent for the first time.",
@@ -33,7 +33,7 @@
   },
   {
     "name": "Cosmic Dark Ages",
-    "age_bya": 13.4,
+    "age_bya": 13.7,
     "category": "cosmological",
     "icon": "🌑",
     "description": "The universe is dark and formless — no stars yet, just a slowly cooling fog of hydrogen and helium.",

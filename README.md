@@ -40,14 +40,14 @@ Cosmic Clock presents time at two scales:
 
 ## Features
 
-- Stereographic all-sky projection for a selected observer location
-- Sun, Moon, and planet position calculations
-- Moon phase, illumination, and rise/set context
+- Orthographic all-sky map for a selected observer location (zenith at the center, horizon at the rim)
+- Sun, Moon, and planet positions from the JPL DE421 ephemeris
+- Moon phase and illumination from the Sun–Moon ecliptic elongation
 - Bright-star catalogue with altitude, azimuth, magnitude, and constellation
-- Sidereal and local solar time
+- Apparent sidereal time and local apparent solar time
 - Date/time override for historical or future sky views
-- 43-event cosmological timeline with category filters
-- Cosmic Calendar scaling from the Big Bang to the present
+- 45-event cosmological timeline with category filters
+- Cosmic Calendar that maps 13.8 billion years onto a 365-day civil year
 - Personalized comparison between a human lifetime and cosmic time
 
 ## Technical Architecture
@@ -72,7 +72,16 @@ pip install -r requirements.txt
 streamlit run app.py
 ~~~
 
-On first launch, Skyfield may download the DE421 ephemeris file and cache it locally.
+On first launch, Skyfield downloads the DE421 ephemeris (about 16 MB) and caches it under `~/skyfield-data`.
+
+## Tests
+
+~~~bash
+pip install -r requirements-dev.txt
+pytest
+~~~
+
+The tests pin the cosmic calendar, Julian dates (including leap years), Meeus sidereal time, and the Sun's zodiac longitude against published values, and compare live Sun, Moon, and solar-time results with Astropy and DE421.
 
 ## Repository Structure
 
@@ -91,7 +100,9 @@ On first launch, Skyfield may download the DE421 ephemeris file and cache it loc
 ├── assets/
 │   ├── events.json
 │   └── constellations.json
-└── requirements.txt
+├── tests/
+├── requirements.txt
+└── requirements-dev.txt
 ~~~
 
 ## Skills Demonstrated
@@ -100,4 +111,6 @@ Scientific Python, astronomical coordinate calculations, external scientific dat
 
 ## Accuracy Note
 
-The primary calculations use established astronomy libraries and the DE421 ephemeris. The application includes a simplified fallback mode when ephemeris resources are unavailable; fallback results are suitable for visualization rather than precision observing.
+Sun, Moon, planet, zodiac, and solar-time calculations use Skyfield and the DE421 ephemeris. Sidereal time uses Astropy's apparent sidereal time. The cosmic calendar is not a second copy of a published poster: it maps 13.8 billion years onto a 365-day year (February has 28 days), and the timeline, home page, and About page all call that function.
+
+If the ephemeris cannot be downloaded, the sky page switches to short low-precision formulas and says so. Those fallback positions are for the map, not for observing. Jupiter through Neptune are the planetary barycenters, which is what DE421 provides; the offset from the planet center is arcseconds.

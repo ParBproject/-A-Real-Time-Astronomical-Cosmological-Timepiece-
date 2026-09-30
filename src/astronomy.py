@@ -1,15 +1,16 @@
 """
-astronomy.py — Core astronomical calculations using Skyfield and Astropy.
+astronomy.py — Sky positions, sidereal time, and solar time.
 
-Design choice: Skyfield is preferred over Astropy for planet/moon positions because:
-1. Skyfield uses NASA JPL DE440 ephemeris (very accurate, sub-arcsecond)
-2. Simpler API for alt/az horizon coordinates needed for sky map
-3. Built-in moon phase calculation
-4. No ERFA dependency issues on some platforms
-
-Astropy is used for: sidereal time, coordinate transforms, and utility math.
+Planet, Sun, and Moon positions come from Skyfield and the JPL DE421
+ephemeris (the kernel this app actually loads). Astropy supplies apparent
+sidereal time. If those libraries or the ephemeris file are unavailable,
+the module falls back to published low-precision formulas: Meeus for
+sidereal time, and a short solar theory for the Sun. Fallback results are
+for the sky map, not for observing.
 """
 
+import math
+import os
 import numpy as np
 import streamlit as st
 from datetime import datetime, timezone, timedelta
@@ -17,21 +18,14 @@ from typing import Optional, Tuple
 
 # ── Skyfield ──────────────────────────────────────────────────────────────────
 try:
-    from skyfield.api import load, wgs84, Star
-    from skyfield.data import mpc
-    from skyfield import almanac
+    from skyfield.api import Loader, wgs84
     SKYFIELD_OK = True
 except ImportError:
     SKYFIELD_OK = False
 
-# ── Astropy (fallback helpers) ────────────────────────────────────────────────
+# ── Astropy (sidereal time) ───────────────────────────────────────────────────
 try:
     from astropy.time import Time
-    from astropy.coordinates import (
-        EarthLocation, AltAz, ICRS,
-        get_body, get_body_barycentric, get_sun
-    )
-    import astropy.units as u
     ASTROPY_OK = True
 except ImportError:
     ASTROPY_OK = False
@@ -39,21 +33,38 @@ except ImportError:
 
 # ─── Ephemeris loading (cached) ───────────────────────────────────────────────
 
-@st.cache_resource(show_spinner="Loading star catalogs…")
+def _ensure_utc(dt: Optional[datetime]) -> datetime:
+    """Return a UTC datetime. Naive values are taken to be UTC, not local time."""
+    if dt is None:
+        return datetime.now(timezone.utc)
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
+def _active_ephemeris():
+    """Return (timescale, ephemeris) when DE421 is loaded, else (None, None)."""
+    ts, eph = load_ephemeris()
+    if SKYFIELD_OK and ts is not None and eph is not None:
+        return ts, eph
+    return None, None
+
+
+@st.cache_resource(show_spinner="Loading ephemeris…")
 def load_ephemeris():
     """Load the Skyfield DE421 ephemeris (small, fast, accurate enough for display)."""
     if not SKYFIELD_OK:
         return None, None
-    ts = load.timescale()
+    # Skyfield's default loader writes into the working directory. Keep the
+    # 16 MB kernel in the home cache so it is not dropped into the repository.
+    cache = os.path.join(os.path.expanduser("~"), "skyfield-data")
+    os.makedirs(cache, exist_ok=True)
+    loader = Loader(cache)
+    ts = loader.timescale()
     try:
-        eph = load("de421.bsp")
+        eph = loader("de421.bsp")
     except Exception:
-        try:
-            from skyfield.api import Loader
-            load2 = Loader(".")
-            eph = load2("de421.bsp")
-        except Exception:
-            eph = None
+        eph = None
     return ts, eph
 
 
@@ -80,16 +91,11 @@ def get_planet_positions(
     Returns list of dicts with keys:
         name, symbol, color, size, alt, az, ra, dec, visible, distance_au
     """
-    ts, eph = load_ephemeris()
-
-    if dt is None:
-        dt = datetime.now(timezone.utc)
-    elif dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-
+    dt = _ensure_utc(dt)
+    ts, eph = _active_ephemeris()
     results = []
 
-    if SKYFIELD_OK and ts and eph:
+    if ts is not None and eph is not None:
         t = ts.from_datetime(dt)
         observer = wgs84.latlon(lat, lon)
         earth = eph["earth"]
@@ -114,6 +120,7 @@ def get_planet_positions(
                     "dec": dec.degrees,
                     "visible": alt.degrees > 0,
                     "distance_au": distance.au,
+                    "source": "de421",
                 })
             except Exception:
                 pass
@@ -165,6 +172,7 @@ def _fallback_planet_positions(lat, lon, dt):
             "dec": dec,
             "visible": alt > 0,
             "distance_au": 1.5,
+            "source": "approximate",
         })
     return results
 
@@ -173,14 +181,10 @@ def _fallback_planet_positions(lat, lon, dt):
 
 def get_sun_position(lat: float, lon: float, dt: Optional[datetime] = None) -> dict:
     """Return Sun's altitude, azimuth, RA, Dec."""
-    if dt is None:
-        dt = datetime.now(timezone.utc)
-    elif dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
+    dt = _ensure_utc(dt)
+    ts, eph = _active_ephemeris()
 
-    ts, eph = load_ephemeris()
-
-    if SKYFIELD_OK and ts and eph:
+    if ts is not None and eph is not None:
         t = ts.from_datetime(dt)
         observer = wgs84.latlon(lat, lon)
         earth = eph["earth"]
@@ -193,6 +197,7 @@ def get_sun_position(lat: float, lon: float, dt: Optional[datetime] = None) -> d
             "alt": alt.degrees, "az": az.degrees,
             "ra": ra.hours, "dec": dec.degrees,
             "above_horizon": alt.degrees > 0,
+            "source": "de421",
         }
 
     # Fallback
@@ -210,23 +215,22 @@ def get_sun_position(lat: float, lon: float, dt: Optional[datetime] = None) -> d
     lst = _approx_sidereal_time(lon, dt)
     ha = (lst - ra_h) * 15.0
     alt, az = _ha_dec_to_altaz(ha, dec_d, lat)
-    return {"alt": alt, "az": az, "ra": ra_h, "dec": dec_d, "above_horizon": alt > 0}
+    return {
+        "alt": alt, "az": az, "ra": ra_h, "dec": dec_d,
+        "above_horizon": alt > 0, "source": "approximate",
+    }
 
 
 # ─── Moon ─────────────────────────────────────────────────────────────────────
 
 def get_moon_data(lat: float, lon: float, dt: Optional[datetime] = None) -> dict:
     """Return Moon position and phase (0–1, where 0/1=new, 0.5=full)."""
-    if dt is None:
-        dt = datetime.now(timezone.utc)
-    elif dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-
-    ts, eph = load_ephemeris()
+    dt = _ensure_utc(dt)
+    ts, eph = _active_ephemeris()
     phase = 0.5
     illumination = 50.0
 
-    if SKYFIELD_OK and ts and eph:
+    if ts is not None and eph is not None:
         t = ts.from_datetime(dt)
         observer = wgs84.latlon(lat, lon)
         earth = eph["earth"]
@@ -252,6 +256,7 @@ def get_moon_data(lat: float, lon: float, dt: Optional[datetime] = None) -> dict
             "phase": phase, "illumination": illumination,
             "above_horizon": alt.degrees > 0,
             "phase_name": _phase_name(phase),
+            "source": "de421",
         }
 
     # Fallback
@@ -276,6 +281,7 @@ def get_moon_data(lat: float, lon: float, dt: Optional[datetime] = None) -> dict
         "phase": phase, "illumination": illumination,
         "above_horizon": alt > 0,
         "phase_name": _phase_name(phase),
+        "source": "approximate",
     }
 
 
@@ -298,53 +304,86 @@ def _phase_name(phase: float) -> str:
         return "🌘 Waning Crescent"
 
 
-def moon_phase_icon(phase: float) -> str:
-    """Return emoji moon phase icon."""
-    icons = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
-    idx = int((phase * 8) % 8)
-    return icons[idx]
-
-
 # ─── Sidereal Time ────────────────────────────────────────────────────────────
 
+def julian_date(dt: datetime) -> float:
+    """Julian Date on the UTC scale for a Gregorian datetime.
+
+    2000-01-01 12:00 UT is JD 2451545.0. January and February are treated as
+    months 13 and 14 of the previous year, which is what makes the leap-day
+    count (including 1900 and 2000) come out right.
+    """
+    dt = _ensure_utc(dt)
+    year = dt.year
+    month = dt.month
+    day = (
+        dt.day
+        + (
+            dt.hour
+            + (dt.minute + (dt.second + dt.microsecond / 1e6) / 60.0) / 60.0
+        )
+        / 24.0
+    )
+    if month <= 2:
+        year -= 1
+        month += 12
+    century = year // 100
+    gregorian = 2 - century + century // 4
+    return (
+        math.floor(365.25 * (year + 4716))
+        + math.floor(30.6001 * (month + 1))
+        + day
+        + gregorian
+        - 1524.5
+    )
+
+
 def get_sidereal_time(lon: float, dt: Optional[datetime] = None) -> float:
-    """Return Local Sidereal Time in decimal hours."""
-    if dt is None:
-        dt = datetime.now(timezone.utc)
-    elif dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
+    """Return local apparent sidereal time in decimal hours.
+
+    Uses Astropy when it is installed. The fallback is local mean sidereal
+    time from Meeus (equation of the equinoxes omitted, under 1.2 seconds).
+    """
+    dt = _ensure_utc(dt)
 
     if ASTROPY_OK:
         t = Time(dt)
         lst = t.sidereal_time("apparent", longitude=f"{lon}d")
-        return lst.hour
+        return float(lst.hour)
     return _approx_sidereal_time(lon, dt)
 
 
 def _approx_sidereal_time(lon: float, dt: datetime) -> float:
-    """Approximate Local Sidereal Time (hours)."""
-    j2000 = datetime(2000, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
-    d = (dt - j2000).total_seconds() / 86400.0
-    gst = (18.697374558 + 24.06570982441908 * d) % 24
-    lst = (gst + lon / 15.0) % 24
-    return lst
+    """Local mean sidereal time in hours (Meeus, Astronomical Algorithms)."""
+    days = julian_date(dt) - 2451545.0
+    centuries = days / 36525.0
+    gmst_deg = (
+        280.46061837
+        + 360.98564736629 * days
+        + 0.000387933 * centuries ** 2
+        - centuries ** 3 / 38710000.0
+    ) % 360.0
+    return (gmst_deg / 15.0 + lon / 15.0) % 24.0
 
 
 def _ha_dec_to_altaz(ha_deg: float, dec_deg: float, lat_deg: float) -> Tuple[float, float]:
-    """Convert Hour Angle + Declination to Altitude + Azimuth."""
+    """Convert hour angle and declination to altitude and azimuth.
+
+    Azimuth is measured from north through east.
+    """
     ha = np.radians(ha_deg)
     dec = np.radians(dec_deg)
     lat = np.radians(lat_deg)
 
     sin_alt = np.sin(dec) * np.sin(lat) + np.cos(dec) * np.cos(lat) * np.cos(ha)
-    alt = np.degrees(np.arcsin(np.clip(sin_alt, -1, 1)))
+    alt = np.degrees(np.arcsin(np.clip(sin_alt, -1.0, 1.0)))
 
-    cos_az = (np.sin(dec) - np.sin(alt / 57.296) * np.sin(lat)) / \
-             (np.cos(np.radians(alt)) * np.cos(lat) + 1e-10)
-    az = np.degrees(np.arccos(np.clip(cos_az, -1, 1)))
-    if np.sin(ha) > 0:
-        az = 360 - az
-    return alt, az
+    # Azimuth from north through east. atan2 keeps the quadrant without the
+    # 1/cos(altitude) division that breaks down at the zenith.
+    east = -np.cos(dec) * np.sin(ha)
+    north = np.sin(dec) * np.cos(lat) - np.cos(dec) * np.sin(lat) * np.cos(ha)
+    az = np.degrees(np.arctan2(east, north)) % 360.0
+    return float(alt), float(az)
 
 
 # ─── Sky Darkness ─────────────────────────────────────────────────────────────
@@ -373,46 +412,103 @@ def get_sky_state(sun_alt: float) -> dict:
 
 # ─── Solar time ───────────────────────────────────────────────────────────────
 
+def _approx_equation_of_time_minutes(dt: datetime) -> float:
+    """Low-precision equation of time in minutes (apparent minus mean).
+
+    N is the UTC day of year, so 29 February shifts the following days.
+    Days since J2000 are not a day-of-year and drift by about a quarter
+    day per year.
+    """
+    day_of_year = _ensure_utc(dt).timetuple().tm_yday
+    b = math.radians(360.0 * (day_of_year - 81) / 365.0)
+    return 9.87 * math.sin(2 * b) - 7.53 * math.cos(b) - 1.5 * math.sin(b)
+
+
+def equation_of_time_minutes(dt: Optional[datetime] = None) -> tuple[float, str]:
+    """Equation of time in minutes, and whether it came from DE421.
+
+    Apparent solar time minus mean solar time. Longitude cancels, so the
+    value is the same at every meridian.
+    """
+    dt = _ensure_utc(dt)
+    ts, eph = _active_ephemeris()
+    if ts is not None and eph is not None:
+        t = ts.from_datetime(dt)
+        ra_hours = eph["earth"].at(t).observe(eph["sun"]).apparent().radec()[0].hours
+        utc_hours = (
+            dt.hour
+            + dt.minute / 60.0
+            + dt.second / 3600.0
+            + dt.microsecond / 3_600_000_000.0
+        )
+        # Greenwich apparent sidereal time minus the Sun's right ascension
+        # is the Sun's hour angle; apparent noon is hour angle zero.
+        raw_hours = t.gast - ra_hours + 12.0 - utc_hours
+        eot_hours = (raw_hours + 12.0) % 24.0 - 12.0
+        return float(eot_hours) * 60.0, "de421"
+    return _approx_equation_of_time_minutes(dt), "approximate"
+
+
 def get_solar_time(lon: float, dt: Optional[datetime] = None) -> datetime:
-    """Return approximate local solar time."""
-    if dt is None:
-        dt = datetime.now(timezone.utc)
-    elif dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
+    """Return local apparent solar time.
 
-    # Equation of time (minutes)
-    j2000 = datetime(2000, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
-    d = (dt - j2000).total_seconds() / 86400.0
-    B = np.radians(360 / 365.0 * (d - 81))
-    eot = 9.87 * np.sin(2 * B) - 7.53 * np.cos(B) - 1.5 * np.sin(B)  # minutes
-
-    solar_offset = timedelta(minutes=lon * 4 + eot)
-    return dt + solar_offset
+    The returned datetime keeps UTC as its timezone label. Its wall-clock
+    fields are the solar time, which is what the sky page formats.
+    """
+    dt = _ensure_utc(dt)
+    eot_min, _source = equation_of_time_minutes(dt)
+    return dt + timedelta(minutes=float(lon) * 4.0 + float(eot_min))
 
 
 # ─── Current zodiac ───────────────────────────────────────────────────────────
 
-def get_current_zodiac(dt: Optional[datetime] = None) -> dict:
-    """Return current zodiac sign based on Sun's ecliptic longitude."""
-    if dt is None:
-        dt = datetime.now(timezone.utc)
+_ZODIAC = (
+    (0, "Aries", "♈"), (30, "Taurus", "♉"), (60, "Gemini", "♊"),
+    (90, "Cancer", "♋"), (120, "Leo", "♌"), (150, "Virgo", "♍"),
+    (180, "Libra", "♎"), (210, "Scorpius", "♏"), (240, "Sagittarius", "♐"),
+    (270, "Capricornus", "♑"), (300, "Aquarius", "♒"), (330, "Pisces", "♓"),
+)
 
+
+def _approx_sun_ecliptic_longitude(dt: datetime) -> float:
+    """Low-precision apparent ecliptic longitude of the Sun, in degrees.
+
+    The 1.915° and 0.020° terms are already in degrees. Applying
+    ``degrees()`` to the sine inflates them by 180/π and moves the Sun
+    into the wrong sign.
+    """
     j2000 = datetime(2000, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
-    d = (dt - j2000).total_seconds() / 86400.0
-    g = np.radians((357.528 + 0.9856003 * d) % 360)
-    L = (280.461 + 0.9856474 * d) % 360
-    lam = (L + 1.915 * np.degrees(np.sin(g)) + 0.020 * np.degrees(np.sin(2 * g))) % 360
+    day = (_ensure_utc(dt) - j2000).total_seconds() / 86400.0
+    mean_anomaly = math.radians((357.528 + 0.9856003 * day) % 360.0)
+    mean_longitude = (280.461 + 0.9856474 * day) % 360.0
+    return (
+        mean_longitude
+        + 1.915 * math.sin(mean_anomaly)
+        + 0.020 * math.sin(2 * mean_anomaly)
+    ) % 360.0
 
-    signs = [
-        (0, "Aries", "♈"), (30, "Taurus", "♉"), (60, "Gemini", "♊"),
-        (90, "Cancer", "♋"), (120, "Leo", "♌"), (150, "Virgo", "♍"),
-        (180, "Libra", "♎"), (210, "Scorpius", "♏"), (240, "Sagittarius", "♐"),
-        (270, "Capricornus", "♑"), (300, "Aquarius", "♒"), (330, "Pisces", "♓"),
-    ]
-    for start, name, sym in reversed(signs):
+
+def sun_ecliptic_longitude(dt: Optional[datetime] = None) -> float:
+    """Apparent ecliptic longitude of the Sun, of date, in degrees."""
+    dt = _ensure_utc(dt)
+    ts, eph = _active_ephemeris()
+    if ts is not None and eph is not None:
+        t = ts.from_datetime(dt)
+        longitude = (
+            eph["earth"].at(t).observe(eph["sun"]).apparent()
+            .ecliptic_latlon(epoch="date")[1].degrees
+        )
+        return float(longitude) % 360.0
+    return _approx_sun_ecliptic_longitude(dt)
+
+
+def get_current_zodiac(dt: Optional[datetime] = None) -> dict:
+    """Tropical zodiac sign from the Sun's ecliptic longitude of date."""
+    lam = sun_ecliptic_longitude(dt)
+    for start, name, sym in reversed(_ZODIAC):
         if lam >= start:
-            return {"name": name, "symbol": sym, "sun_lon": lam}
-    return {"name": "Pisces", "symbol": "♓", "sun_lon": lam}
+            return {"name": name, "symbol": sym, "sun_lon": float(lam)}
+    return {"name": "Aries", "symbol": "♈", "sun_lon": float(lam)}
 
 
 # ─── Star positions for sky map ───────────────────────────────────────────────
@@ -420,11 +516,7 @@ def get_current_zodiac(dt: Optional[datetime] = None) -> dict:
 def get_bright_stars_altaz(lat: float, lon: float, dt: Optional[datetime] = None) -> list[dict]:
     """Return alt/az for bright named stars from the constellations.json catalog."""
     import json, os
-    if dt is None:
-        dt = datetime.now(timezone.utc)
-    elif dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-
+    dt = _ensure_utc(dt)
     lst = get_sidereal_time(lon, dt)
 
     asset_path = os.path.join(os.path.dirname(__file__), "..", "assets", "constellations.json")

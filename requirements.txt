@@ -1,6 +1,6 @@
-streamlit>=1.32.0
-plotly>=5.20.0
-astropy>=6.0.0
-skyfield>=1.48
-numpy>=1.26.0
-pandas>=2.2.0
+streamlit==1.50.0
+plotly==6.3.1
+astropy==8.0.1
+skyfield==1.55
+numpy==2.4.4
+pandas==2.3.2

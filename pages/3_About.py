@@ -8,6 +8,10 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from src.utils import inject_css
+from src.timeline import (
+    load_events, age_to_cosmic_year, years_ago_to_human_readable,
+    UNIVERSE_AGE_YEARS, SECONDS_PER_YEAR, HUMAN_LIFESPAN_YEARS,
+)
 
 st.set_page_config(
     page_title="About · Cosmic Clock",
@@ -93,18 +97,18 @@ with col1:
     st.markdown("""
     | Data | Source | Accuracy |
     |------|--------|----------|
-    | Planet positions | NASA JPL DE421 via Skyfield | Sub-arcsecond |
-    | Moon phase | Ecliptic longitude calculation | ± 1° |
-    | Star catalog | Custom hardcoded from Hipparcos | RA/Dec to 0.01° |
-    | Sidereal time | Astropy / IERS tables | Sub-second |
-    | Cosmic ages | Published cosmological literature | ± uncertainties noted |
-    | Cosmic Calendar | Carl Sagan / Wikipedia | Reference-grade |
+    | Planet, Sun, Moon positions | NASA JPL DE421 via Skyfield | Ephemeris-grade; the map shows 0.1° |
+    | Moon phase | Difference of ecliptic longitudes | Matches new, quarter, and full moons |
+    | Star catalog | Bright stars, Hipparcos round numbers | About 0.01 h in RA and 0.01° in Dec |
+    | Sidereal time | Astropy apparent sidereal time | Sub-second when Astropy is installed |
+    | Equation of time | DE421 hour angle of the Sun | Seconds; a day-of-year formula is the offline fallback |
+    | Cosmic Calendar | 13.8 billion years on a 365-day civil year | Same function as the timeline |
     """)
 
 with col2:
     st.markdown("## Quick Reference")
 
-    st.markdown("""
+    st.markdown(f"""
     <div class="cosmic-card">
         <div style="font-family: Orbitron; font-size:0.65rem; color:#4FC3F7; 
                     letter-spacing:0.1em; margin-bottom:12px;">COSMIC FACTS</div>
@@ -117,9 +121,9 @@ with col2:
         Age of Homo sapiens: <span style="color:#e8f0fe;">~300,000 years</span><br>
         Age of agriculture: <span style="color:#e8f0fe;">~12,000 years</span><br>
         <br>
-        1 cosmic year second = <span style="color:#CE93D8;">438 real years</span><br>
-        Human lifespan (80yr) = <span style="color:#CE93D8;">0.183 cosmic s</span><br>
-        All human history = <span style="color:#CE93D8;">~22 cosmic sec</span><br>
+        1 cosmic second = <span style="color:#CE93D8;">{UNIVERSE_AGE_YEARS / SECONDS_PER_YEAR:.0f} real years</span><br>
+        Human lifespan (80yr) = <span style="color:#CE93D8;">{HUMAN_LIFESPAN_YEARS / UNIVERSE_AGE_YEARS * SECONDS_PER_YEAR:.3f} cosmic s</span><br>
+        10,000 years of history = <span style="color:#CE93D8;">{10000 / UNIVERSE_AGE_YEARS * SECONDS_PER_YEAR:.1f} cosmic sec</span><br>
         
         </div>
     </div>
@@ -173,45 +177,29 @@ with col2:
 st.markdown("---")
 
 st.markdown("## The Cosmic Calendar — Full Reference")
-st.markdown("""
-The Cosmic Calendar, popularized by Carl Sagan in his 1980 TV series *Cosmos*, 
-compresses the entire history of the universe into a single year. Here's the full scale:
-
-| Cosmic Calendar Date | Real Event | Years Ago |
-|---------------------|------------|-----------|
-| Jan 1, 00:00:00 | Big Bang | 13.8 billion |
-| Jan 22 | First stars and galaxies | 13.5 billion |
-| Mar 16 | Milky Way galaxy forms | 10 billion |
-| Sep 2 | Solar System forms | 4.6 billion |
-| Sep 6 | Oldest rocks on Earth | 4.4 billion |
-| Sep 21 | First life (prokaryotes) | 3.8 billion |
-| Oct 9 | Eukaryotic cells | 2.7 billion |
-| Dec 5 | First multicellular organisms | 0.8 billion |
-| Dec 17 | Cambrian explosion (complex animals) | 541 million |
-| Dec 19 | First land plants | 470 million |
-| Dec 21 | First forests | 370 million |
-| Dec 23 | First reptiles | 315 million |
-| Dec 24 | Great Permian extinction | 252 million |
-| Dec 25 | First dinosaurs | 230 million |
-| Dec 25 | First mammals | 225 million |
-| Dec 28 | First flowers | 130 million |
-| Dec 30, 06:24 | Chicxulub impact / dinosaurs extinct | 66 million |
-| Dec 30, 10:00 | Mammals diversify | 65 million |
-| Dec 31, 06:05 | First primates | 55 million |
-| Dec 31, 22:24 | Homo sapiens emerge | 300,000 |
-| Dec 31, 23:44 | First cave paintings | 45,000 |
-| Dec 31, 23:59:32 | Agriculture invented | 12,000 |
-| Dec 31, 23:59:46 | First cities (Uruk) | 8,000 |
-| Dec 31, 23:59:48 | Writing invented | 5,500 |
-| Dec 31, 23:59:57.5 | Scientific revolution | 450 |
-| Dec 31, 23:59:59.25 | Industrial revolution | 250 |
-| Dec 31, 23:59:59.8 | Sputnik launched | 67 |
-| Dec 31, 23:59:59.95 | Moon landing | 56 |
-| Dec 31, 23:59:59.994 | World Wide Web | 35 |
-| **Dec 31, 23:59:59.9999+** | **Right now** | 0 |
-
-*One cosmic second = approximately 438 years of real time.*
-""")
+st.markdown(
+    """
+The Cosmic Calendar, popularized by Carl Sagan, compresses the history of the
+universe into one civil year. The rows below are computed from the timeline
+events with the same function the rest of the app uses: 13.8 billion years
+mapped onto 365 days, with real month lengths and no 29 February. The present
+is the last millisecond of 31 December.
+"""
+)
+_events = load_events()
+_rows = [
+    "| Cosmic Calendar | Event | Years ago |",
+    "| --- | --- | --- |",
+]
+for _ev in _events:
+    _cal = age_to_cosmic_year(_ev["age_years"])
+    _rows.append(
+        f"| {_cal['display']} | {_ev['name']} | {years_ago_to_human_readable(_ev['age_years'])} |"
+    )
+st.markdown("\n".join(_rows))
+st.markdown(
+    f"*One cosmic second = {UNIVERSE_AGE_YEARS / SECONDS_PER_YEAR:.1f} years of real time.*"
+)
 
 st.markdown("---")
 st.markdown("""

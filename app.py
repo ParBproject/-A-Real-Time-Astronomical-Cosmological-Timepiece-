@@ -10,8 +10,11 @@ import sys, os
 # Ensure src/ is importable
 sys.path.insert(0, os.path.dirname(__file__))
 
-from src.utils import inject_css, COSMIC_CSS, now_utc
-from src.timeline import load_events, UNIVERSE_AGE_YEARS, age_to_cosmic_year
+from src.utils import inject_css, now_utc
+from src.timeline import (
+    UNIVERSE_AGE_YEARS, SECONDS_PER_YEAR, COSMIC_YEAR_DAYS,
+    HUMAN_LIFESPAN_YEARS, age_to_cosmic_year,
+)
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -94,14 +97,11 @@ st.markdown("<br>", unsafe_allow_html=True)
 
 # ── Live stats strip ──────────────────────────────────────────────────────────
 now = now_utc()
-events = load_events()
-cosmic_pos = age_to_cosmic_year(0.0)
-
-# Find the most recent event (closest to present)
-recent_event = max(
-    [e for e in events if e["age_years"] > 0],
-    key=lambda e: -e["age_years"]  # smallest age_years = most recent
-)
+cosmic_now = age_to_cosmic_year(0.0)
+years_per_cosmic_second = UNIVERSE_AGE_YEARS / SECONDS_PER_YEAR
+life_cosmic_seconds = (HUMAN_LIFESPAN_YEARS / UNIVERSE_AGE_YEARS) * SECONDS_PER_YEAR
+history_years = 10_000
+history_cosmic_seconds = (history_years / UNIVERSE_AGE_YEARS) * SECONDS_PER_YEAR
 
 col1, col2, col3, col4 = st.columns(4)
 
@@ -115,14 +115,12 @@ with col1:
 with col2:
     st.metric(
         "📅 Cosmic Calendar",
-        "Dec 31  23:59:59",
+        cosmic_now["display"],
         "You are here",
     )
 
 with col3:
-    universe_age_s = 13.8e9 * 365.25 * 24 * 3600
-    human_history_s = 10000 * 365.25 * 24 * 3600
-    human_pct = human_history_s / universe_age_s * 100
+    human_pct = history_years / UNIVERSE_AGE_YEARS * 100
     st.metric(
         "🧠 Human Civilization",
         "~10,000 years",
@@ -130,12 +128,10 @@ with col3:
     )
 
 with col4:
-    seconds_per_cosmic_year = 365.25 * 24 * 3600
-    human_life_as_cosmic = (80 / 13.8e9) * seconds_per_cosmic_year
     st.metric(
         "⏱️ Your Lifetime",
         "≈ 80 years",
-        f"≈ {human_life_as_cosmic:.4f} cosmic seconds",
+        f"≈ {life_cosmic_seconds:.4f} cosmic seconds",
     )
 
 st.markdown("<br>", unsafe_allow_html=True)
@@ -182,18 +178,18 @@ with col_b:
     """, unsafe_allow_html=True)
 
 with col_c:
-    st.markdown("""
+    st.markdown(f"""
     <div class="cosmic-card">
         <div style="font-family: Orbitron; color: #81C784; font-size:0.75rem; letter-spacing:0.1em; margin-bottom:10px;">
             🌠 PERSPECTIVE ENGINE
         </div>
         <div style="font-family: Space Mono; color: #8899bb; font-size:0.78rem; line-height:1.8;">
             Numbers that transform how you see time.<br><br>
-            • 1 human life = 0.18 cosmic seconds<br>
-            • All of human history = last 22 min<br>
-            • First stars born in February<br>
-            • Dinosaurs extinct Dec 30th<br>
-            • Agriculture: Dec 31 at 11:59 PM<br><br>
+            • 1 human life ≈ {life_cosmic_seconds:.3f} cosmic seconds<br>
+            • 10,000 years of history ≈ {history_cosmic_seconds:.0f} cosmic seconds<br>
+            • First stars: {age_to_cosmic_year(13.5e9)['month_name']} {age_to_cosmic_year(13.5e9)['day']}<br>
+            • Dinosaur extinction: {age_to_cosmic_year(66e6)['month_name']} {age_to_cosmic_year(66e6)['day']}<br>
+            • Agriculture: {age_to_cosmic_year(12_000)['display']}<br><br>
             <span style="color:#81C784;">Feels like yesterday.</span>
         </div>
     </div>
@@ -205,23 +201,24 @@ st.markdown("<br>", unsafe_allow_html=True)
 st.markdown("## The Cosmic Calendar at a Glance")
 
 facts = [
-    ("💥", "Big Bang",           "Jan 1,  00:00:00",  "13.8 billion years ago"),
-    ("⭐", "First Stars",        "Jan 22",             "13.5 billion years ago"),
-    ("🌌", "Milky Way Forms",    "Mar 16",             "10.0 billion years ago"),
-    ("☀️", "Our Solar System",   "Sep 2",              "4.6 billion years ago"),
-    ("🌍", "Earth Forms",        "Sep 6",              "4.54 billion years ago"),
-    ("🦠", "First Life",         "Sep 21",             "3.8 billion years ago"),
-    ("🦕", "Dinosaurs Rise",     "Dec 25",             "230 million years ago"),
-    ("☄️", "Chicxulub Impact",   "Dec 30, 06:24",      "66 million years ago"),
-    ("🧠", "Modern Humans",      "Dec 31, 22:24",      "300,000 years ago"),
-    ("🌾", "Agriculture",        "Dec 31, 23:59:32",   "12,000 years ago"),
-    ("🔭", "Scientific Rev.",    "Dec 31, 23:59:57.5", "450 years ago"),
-    ("🚀", "Space Age",          "Dec 31, 23:59:59.8", "67 years ago"),
-    ("⏱️", "RIGHT NOW",          "Dec 31, 23:59:59.99", "Present moment"),
+    ("💥", "Big Bang",        13.8e9,  "13.8 billion years ago"),
+    ("⭐", "First Stars",     13.5e9,  "13.5 billion years ago"),
+    ("🌌", "Milky Way Forms", 10.0e9,  "10.0 billion years ago"),
+    ("☀️", "Our Solar System", 4.6e9,  "4.6 billion years ago"),
+    ("🌍", "Earth Forms",     4.54e9,  "4.54 billion years ago"),
+    ("🦠", "First Life",      3.8e9,   "3.8 billion years ago"),
+    ("🦕", "Dinosaurs Rise",  230e6,   "230 million years ago"),
+    ("☄️", "Chicxulub Impact", 66e6,   "66 million years ago"),
+    ("🧠", "Modern Humans",   300_000, "300,000 years ago"),
+    ("🌾", "Agriculture",     12_000,  "12,000 years ago"),
+    ("🔭", "Scientific Rev.", 450,     "450 years ago"),
+    ("🚀", "Space Age",       67,      "67 years ago"),
+    ("⏱️", "RIGHT NOW",       0.0,     "Present moment"),
 ]
 
 cols = st.columns(4)
-for i, (icon, name, date, real_date) in enumerate(facts):
+for i, (icon, name, age_years, real_date) in enumerate(facts):
+    date = age_to_cosmic_year(age_years)["display"]
     with cols[i % 4]:
         st.markdown(f"""
         <div style="background: rgba(13,13,43,0.6); border: 1px solid rgba(79,195,247,0.1);
@@ -239,11 +236,12 @@ st.markdown("<br>", unsafe_allow_html=True)
 # ── Scale of the universe ─────────────────────────────────────────────────────
 st.markdown("## The Scale of Deep Time")
 
-st.markdown("""
+st.markdown(f"""
 <div class="cosmic-card">
 <div style="font-family: Space Mono; font-size:0.8rem; color:#8899bb; line-height:2.2;">
 
-If the entire history of the universe were compressed into a single calendar year:
+If the entire history of the universe were compressed into a single 365-day calendar year
+(February has 28 days; there is no leap day in the analogy):
 
 <br>
 
@@ -256,32 +254,32 @@ If the entire history of the universe were compressed into a single calendar yea
 <tr style="color:#e8f0fe;">
 <td style="padding:5px 6px; font-size:0.75rem;">1 cosmic year</td>
 <td style="padding:5px 6px; font-size:0.75rem;">13.8 billion years</td>
-<td style="padding:5px 6px; font-size:0.75rem;">438 years of real time</td>
+<td style="padding:5px 6px; font-size:0.75rem;">{years_per_cosmic_second:.0f} years of real time</td>
 </tr>
 <tr style="color:#8899bb;">
-<td style="padding:5px 6px; font-size:0.75rem;">1 cosmic month</td>
-<td style="padding:5px 6px; font-size:0.75rem;">1.15 billion years</td>
+<td style="padding:5px 6px; font-size:0.75rem;">1 average cosmic month</td>
+<td style="padding:5px 6px; font-size:0.75rem;">{UNIVERSE_AGE_YEARS / 12 / 1e9:.2f} billion years</td>
 <td style="padding:5px 6px; font-size:0.75rem;">—</td>
 </tr>
 <tr style="color:#e8f0fe;">
 <td style="padding:5px 6px; font-size:0.75rem;">1 cosmic day</td>
-<td style="padding:5px 6px; font-size:0.75rem;">37.8 million years</td>
+<td style="padding:5px 6px; font-size:0.75rem;">{UNIVERSE_AGE_YEARS / COSMIC_YEAR_DAYS / 1e6:.1f} million years</td>
 <td style="padding:5px 6px; font-size:0.75rem;">—</td>
 </tr>
 <tr style="color:#8899bb;">
 <td style="padding:5px 6px; font-size:0.75rem;">1 cosmic hour</td>
-<td style="padding:5px 6px; font-size:0.75rem;">1.575 million years</td>
+<td style="padding:5px 6px; font-size:0.75rem;">{UNIVERSE_AGE_YEARS / COSMIC_YEAR_DAYS / 24 / 1e6:.3f} million years</td>
 <td style="padding:5px 6px; font-size:0.75rem;">—</td>
 </tr>
 <tr style="color:#e8f0fe;">
 <td style="padding:5px 6px; font-size:0.75rem;">1 cosmic minute</td>
-<td style="padding:5px 6px; font-size:0.75rem;">26,250 years</td>
+<td style="padding:5px 6px; font-size:0.75rem;">{UNIVERSE_AGE_YEARS / COSMIC_YEAR_DAYS / 24 / 60:,.0f} years</td>
 <td style="padding:5px 6px; font-size:0.75rem;">—</td>
 </tr>
 <tr style="color:#CE93D8; font-weight:bold;">
 <td style="padding:5px 6px; font-size:0.75rem;">Your entire lifetime (80 yrs)</td>
 <td style="padding:5px 6px; font-size:0.75rem;">80 years</td>
-<td style="padding:5px 6px; font-size:0.75rem;"><b>0.183 cosmic seconds</b></td>
+<td style="padding:5px 6px; font-size:0.75rem;"><b>{life_cosmic_seconds:.3f} cosmic seconds</b></td>
 </tr>
 </table>
 
