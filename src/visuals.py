@@ -7,10 +7,7 @@ Design philosophy: dark, cosmic aesthetic with careful use of color and glow eff
 
 import numpy as np
 import plotly.graph_objects as go
-import plotly.express as px
 from typing import Optional
-import json
-import os
 
 
 # ─── Color palette ────────────────────────────────────────────────────────────
@@ -39,12 +36,14 @@ def build_sky_map(
     show_labels: bool = True,
 ) -> go.Figure:
     """
-    Build a full-sky stereographic projection centered on the zenith.
+    Build an orthographic all-sky map centered on the zenith.
     Alt=90° → center, Alt=0° → edge, Az=0° (N) → top.
+    Radius is cos(altitude), which is the orthographic projection of the
+    celestial hemisphere, not a stereographic one.
     """
 
     def altaz_to_xy(alt, az):
-        """Stereographic: radius = cos(alt), angle = az from N clockwise."""
+        """Orthographic: radius = cos(alt), angle = az from N through E."""
         r = np.cos(np.radians(max(0, alt)))
         az_rad = np.radians(az)
         x = r * np.sin(az_rad)
@@ -441,13 +440,16 @@ def build_cosmic_calendar_wheel(events: list[dict]) -> go.Figure:
     Build a radial/polar chart showing the Cosmic Calendar as a clock face.
     Jan 1 = top, Dec 31 = almost back to top.
     """
-    from src.timeline import age_to_cosmic_year, CATEGORY_COLORS
+    from src.timeline import (
+        age_to_cosmic_year, CATEGORY_COLORS, MONTH_DAYS, COSMIC_YEAR_DAYS,
+    )
 
     fig = go.Figure()
 
-    # Month dividers
-    for month in range(12):
-        angle = month / 12 * 360
+    # Month dividers sit on the real civil-year boundaries, not on equal twelfths.
+    cum_days = 0
+    for length in MONTH_DAYS:
+        angle = cum_days / COSMIC_YEAR_DAYS * 360
         r_max = 1.0
         x = r_max * np.sin(np.radians(angle))
         y = r_max * np.cos(np.radians(angle))
@@ -458,13 +460,17 @@ def build_cosmic_calendar_wheel(events: list[dict]) -> go.Figure:
             hoverinfo="skip",
             showlegend=False,
         ))
+        cum_days += length
 
     # Month labels
     month_names = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+    cum_days = 0
     for i, name in enumerate(month_names):
-        angle = (i + 0.5) / 12 * 360
+        length = MONTH_DAYS[i]
+        angle = (cum_days + length / 2) / COSMIC_YEAR_DAYS * 360
         x = 1.15 * np.sin(np.radians(angle))
         y = 1.15 * np.cos(np.radians(angle))
+        cum_days += length
         fig.add_annotation(x=x, y=y, text=name,
                            showarrow=False,
                            font=dict(color=TEXT_COLOR, size=9, family="monospace"))
@@ -547,7 +553,8 @@ def build_planet_visibility_chart(planets: list[dict]) -> go.Figure:
 
     fig.add_vline(x=0, line_color=ACCENT1, line_width=1.5, line_dash="dash")
     fig.add_annotation(
-        x=5, y=7.5, text="Horizon", showarrow=False,
+        x=0, xanchor="left", y=0.98, yref="paper",
+        text="Horizon", showarrow=False,
         font=dict(color=ACCENT1, size=9),
     )
 

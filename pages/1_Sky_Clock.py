@@ -6,8 +6,7 @@ Interactive sky map showing the current sky at your location.
 import streamlit as st
 import sys
 import os
-from datetime import datetime, timezone, timedelta
-import numpy as np
+from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -147,7 +146,7 @@ with map_col:
     st.markdown("""
     <div style="font-family: Orbitron; font-size:0.7rem; color:#4FC3F7; 
                 letter-spacing:0.15em; margin-bottom:8px;">
-        ALL-SKY MAP — STEREOGRAPHIC PROJECTION
+        ALL-SKY MAP — ORTHOGRAPHIC PROJECTION
     </div>
     """, unsafe_allow_html=True)
 
@@ -163,6 +162,13 @@ with map_col:
         show_labels=show_labels,
     )
     st.plotly_chart(sky_fig, use_container_width=True, config={"displayModeBar": False})
+
+    position_source = sun.get("source", "approximate")
+    if position_source == "de421":
+        source_note = "Sun, Moon, and planets from NASA JPL DE421 via Skyfield. Sidereal time from Astropy."
+    else:
+        source_note = "Approximate positions — the DE421 ephemeris is not loaded. Not for observing."
+    st.caption(source_note)
 
     st.markdown("""
     <div style="font-family: Space Mono; font-size:0.65rem; color:#2a2a5a; text-align:center;">
@@ -318,5 +324,5 @@ with st.expander("ℹ️ About Astronomical Coordinates"):
     - **Astronomical twilight**: Sun −12° to −18° — faint stars becoming visible
     - **Night**: Sun below −18° — full dark sky
 
-    *Positions calculated using NASA JPL DE421 ephemeris via the Skyfield library.*
+    *When DE421 is loaded, positions come from that ephemeris via Skyfield. Otherwise the map uses the low-precision fallback and says so above.*
     """)

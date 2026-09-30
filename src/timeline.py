@@ -10,19 +10,31 @@ history of the universe into a single Earth year. This module handles:
 """
 
 import json
+import math
 import os
-import numpy as np
 from datetime import datetime, timezone
-from typing import Optional
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
 UNIVERSE_AGE_YEARS = 13.8e9        # years
-UNIVERSE_AGE_SECONDS = UNIVERSE_AGE_YEARS * 365.25 * 24 * 3600
 
-SECONDS_PER_YEAR = 365.25 * 24 * 3600
+# The Cosmic Calendar is one civil year: January has 31 days and February
+# has 28. A mean year of 365.25 days has no 31 December that lines up with
+# "seconds before midnight", so the analogy uses 365 days and the same
+# length for every "cosmic second" below. Leap days are handled in the
+# astronomical clock, not in this scale.
+MONTH_DAYS = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
+MONTH_NAMES = (
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+)
+COSMIC_YEAR_DAYS = sum(MONTH_DAYS)  # 365
 SECONDS_PER_DAY = 86400.0
 SECONDS_PER_HOUR = 3600.0
+SECONDS_PER_YEAR = COSMIC_YEAR_DAYS * SECONDS_PER_DAY
+UNIVERSE_AGE_SECONDS = UNIVERSE_AGE_YEARS * SECONDS_PER_YEAR
+_MICROS_PER_SECOND = 1_000_000
+_YEAR_MICROS = int(SECONDS_PER_YEAR * _MICROS_PER_SECOND)
 HUMAN_LIFESPAN_YEARS = 80.0
 HUMAN_LIFESPAN_SECONDS = HUMAN_LIFESPAN_YEARS * SECONDS_PER_YEAR
 
@@ -53,8 +65,10 @@ def load_events() -> list[dict]:
         age_bya = ev.get("age_bya", 0.0)
         ev["age_years"] = age_bya * 1e9
         ev["years_ago"] = age_bya * 1e9
-        ev["pct_of_universe"] = (age_bya * 1e9) / UNIVERSE_AGE_YEARS  # 0=Big Bang, 0→1 means older
-        ev["pct_from_start"] = 1.0 - ev["pct_of_universe"]           # 0=Big Bang,  1=now
+        # 1 at the Big Bang, 0 at the present.
+        ev["pct_of_universe"] = (age_bya * 1e9) / UNIVERSE_AGE_YEARS
+        # Timeline coordinate: 0 at the Big Bang, 1 at the present.
+        ev["pct_from_start"] = 1.0 - ev["pct_of_universe"]
 
     # Sort oldest first
     events.sort(key=lambda e: -e["age_bya"])
@@ -77,41 +91,70 @@ def _fallback_events():
 
 # ─── Cosmic Calendar conversions ─────────────────────────────────────────────
 
+def _fraction_from_age(age_years: float) -> float:
+    """0 at the Big Bang, 1 at the present."""
+    fraction = 1.0 - (age_years / UNIVERSE_AGE_YEARS)
+    return max(0.0, min(1.0, fraction))
+
+
+def _calendar_from_elapsed_micros(elapsed_us: int) -> dict:
+    """Map microseconds since 1 January 00:00 onto a 365-day civil year."""
+    elapsed_us = min(max(int(elapsed_us), 0), _YEAR_MICROS - 1)
+    micros_per_day = int(SECONDS_PER_DAY * _MICROS_PER_SECOND)
+    day_of_year = elapsed_us // micros_per_day
+    day_us = elapsed_us % micros_per_day
+
+    month_index = 0
+    day_in_month = day_of_year
+    for i, length in enumerate(MONTH_DAYS):
+        if day_in_month < length:
+            month_index = i
+            break
+        day_in_month -= length
+
+    hour = day_us // 3_600_000_000
+    day_us %= 3_600_000_000
+    minute = day_us // 60_000_000
+    day_us %= 60_000_000
+    whole_second = day_us // _MICROS_PER_SECOND
+    millis = (day_us % _MICROS_PER_SECOND) // 1_000
+    second = whole_second + millis / 1000.0
+    month_name = MONTH_NAMES[month_index]
+    return {
+        "month": month_index + 1,
+        "day": int(day_in_month) + 1,
+        "hour": int(hour),
+        "minute": int(minute),
+        "second": second,
+        "month_name": month_name,
+        "display": (
+            f"{month_name} {int(day_in_month) + 1}, "
+            f"{int(hour):02d}:{int(minute):02d}:{int(whole_second):02d}.{int(millis):03d}"
+        ),
+    }
+
+
 def age_to_cosmic_year(age_years: float) -> dict:
     """
-    Convert a cosmic age (years before present) to a position on the Cosmic Calendar.
-    Returns month (1-12), day (1-31), hour (0-23), minute (0-59), second (0-59).
+    Convert years before the present to a Cosmic Calendar date.
+
+    The Big Bang is 1 January 00:00:00.000. The present is the last
+    millisecond of 31 December, not the start of January and not 1 December.
+    Months have their real civil lengths.
     """
-    fraction = 1.0 - (age_years / UNIVERSE_AGE_YEARS)  # 0 = Big Bang, 1 = now
-    fraction = max(0.0, min(1.0, fraction))
+    fraction = _fraction_from_age(age_years)
+    if fraction >= 1.0:
+        # Last millisecond of the year. fraction * year-length is the first
+        # instant of the next 1 January, which is not "now".
+        elapsed_us = _YEAR_MICROS - 1_000
+    elif fraction <= 0.0:
+        elapsed_us = 0
+    else:
+        elapsed_us = int(math.floor(fraction * _YEAR_MICROS))
 
-    total_seconds = fraction * SECONDS_PER_YEAR
-    # Month (1-indexed)
-    month_seconds = SECONDS_PER_YEAR / 12.0
-    month = min(12, int(total_seconds / month_seconds) + 1)
-
-    remaining = total_seconds % month_seconds
-    day_seconds = month_seconds / 31.0  # approx
-    day = min(31, int(remaining / day_seconds) + 1)
-
-    remaining2 = remaining % day_seconds
-    hour = int(remaining2 / 3600) % 24
-    minute = int((remaining2 % 3600) / 60)
-    second = int(remaining2 % 60)
-
-    month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-
-    return {
-        "month": month,
-        "day": day,
-        "hour": hour,
-        "minute": minute,
-        "second": second,
-        "month_name": month_names[month - 1],
-        "display": f"{month_names[month-1]} {day}, {hour:02d}:{minute:02d}:{second:02d}",
-        "fraction": fraction,
-    }
+    result = _calendar_from_elapsed_micros(elapsed_us)
+    result["fraction"] = fraction
+    return result
 
 
 def age_to_scale(age_years: float, scale_name: str) -> dict:
@@ -122,30 +165,31 @@ def age_to_scale(age_years: float, scale_name: str) -> dict:
     scale = SCALES.get(scale_name, SCALES["Cosmic Year"])
     duration = scale["duration_s"]
 
-    fraction = 1.0 - (age_years / UNIVERSE_AGE_YEARS)
-    fraction = max(0.0, min(1.0, fraction))
+    fraction = _fraction_from_age(age_years)
     elapsed_s = fraction * duration
+    if scale_name == "Cosmic Year":
+        display = age_to_cosmic_year(age_years)["display"]
+    else:
+        display = _format_scale_time(elapsed_s, scale_name, duration)
 
     return {
         "fraction": fraction,
         "elapsed_seconds": elapsed_s,
-        "display": _format_scale_time(elapsed_s, scale_name),
+        "display": display,
         "remaining_seconds": duration - elapsed_s,
     }
 
 
-def _format_scale_time(elapsed_s: float, scale_name: str) -> str:
+def _format_scale_time(elapsed_s: float, scale_name: str, duration: float) -> str:
     """Format elapsed seconds into human-readable time for a given scale."""
-    if scale_name == "Cosmic Year":
-        month_s = SECONDS_PER_YEAR / 12.0
-        m = min(12, int(elapsed_s / month_s) + 1)
-        rem = elapsed_s % month_s
-        d = min(31, int(rem / (month_s / 31)) + 1)
-        h = int((rem % (month_s / 31)) / 3600) % 24
-        mi = int(((rem % (month_s / 31)) % 3600) / 60)
-        names = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-        return f"{names[m-1]} {d}, {h:02d}:{mi:02d}"
-    elif scale_name == "Cosmic Day":
+    # An exact end (fraction == 1) is the last instant of the scale, not
+    # 24:00:00 or 60 minutes, which are the start of the next unit.
+    at_end = elapsed_s >= duration - 1e-9
+    if scale_name == "Cosmic Day" and at_end:
+        return "23:59:59"
+    if scale_name == "Cosmic Hour" and at_end:
+        return "59m 59s 999ms"
+    if scale_name == "Cosmic Day":
         h = int(elapsed_s / 3600)
         m = int((elapsed_s % 3600) / 60)
         s = int(elapsed_s % 60)
@@ -229,18 +273,16 @@ def compute_personal_stats(birth_year: int) -> dict:
     current_year = datetime.now(timezone.utc).year
     age_years = current_year - birth_year
 
-    # How many 'Cosmic Calendar seconds' does a human lifetime represent?
+    # How many Cosmic Calendar seconds a human lifetime represents.
     lifespan_as_cosmic_seconds = (HUMAN_LIFESPAN_YEARS / UNIVERSE_AGE_YEARS) * SECONDS_PER_YEAR
     age_as_cosmic_seconds = (age_years / UNIVERSE_AGE_YEARS) * SECONDS_PER_YEAR
     age_as_cosmic_ms = age_as_cosmic_seconds * 1000
     age_as_cosmic_us = age_as_cosmic_ms * 1000
 
-    # What cosmic date were you born?
-    birth_years_ago = UNIVERSE_AGE_YEARS - (UNIVERSE_AGE_YEARS - age_years)  # = age_years
-    # Born 'age_years' years before present = very close to Dec 31 23:59:59
+    # Born `age_years` before the present: the last moments of 31 December.
     birth_cosmic = age_to_cosmic_year(age_years)
 
-    # How many Big Bang equivalents fit in a human life?
+    # Fraction of cosmic time occupied by an 80-year life.
     universes_in_life = HUMAN_LIFESPAN_YEARS / UNIVERSE_AGE_YEARS
 
     return {

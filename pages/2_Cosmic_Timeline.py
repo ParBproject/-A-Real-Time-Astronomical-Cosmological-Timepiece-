@@ -6,15 +6,14 @@ import streamlit as st
 import sys
 import os
 from datetime import datetime, timezone
-import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from src.utils import inject_css, now_utc
+from src.utils import inject_css
 from src.timeline import (
-    load_events, UNIVERSE_AGE_YEARS, SCALES,
+    load_events, UNIVERSE_AGE_YEARS, SCALES, SECONDS_PER_YEAR,
     age_to_cosmic_year, age_to_scale, years_ago_to_human_readable,
-    format_cosmic_fraction, compute_personal_stats,
+    compute_personal_stats,
     CATEGORY_COLORS, CATEGORY_LABELS,
 )
 from src.visuals import build_cosmic_timeline, build_cosmic_calendar_wheel
@@ -72,7 +71,7 @@ with st.sidebar:
     zoom_mode = st.select_slider(
         "View range",
         options=["Full Universe", "Last 1 Billion Yrs", "Last 500 Myr", "Last 100 Myr",
-                 "Last 10 Myr", "Human History", "Last 10,000 Yrs"],
+                 "Last 10 Myr", "Last 3 Million Yrs", "Last 10,000 Yrs"],
         value="Full Universe",
     )
 
@@ -82,7 +81,7 @@ with st.sidebar:
         "Last 500 Myr":        [1 - 5e8 / UNIVERSE_AGE_YEARS - 0.005, 1.02],
         "Last 100 Myr":        [1 - 1e8 / UNIVERSE_AGE_YEARS - 0.001, 1.02],
         "Last 10 Myr":         [1 - 1e7 / UNIVERSE_AGE_YEARS - 0.0002, 1.02],
-        "Human History":       [1 - 3e6 / UNIVERSE_AGE_YEARS - 0.00003, 1.02],
+        "Last 3 Million Yrs":  [1 - 3e6 / UNIVERSE_AGE_YEARS - 0.00003, 1.02],
         "Last 10,000 Yrs":     [1 - 1e4 / UNIVERSE_AGE_YEARS - 0.000002, 1.02],
     }
     zoom_range = zoom_ranges.get(zoom_mode, [0.0, 1.02])
@@ -112,7 +111,10 @@ with st.sidebar:
     use_personal = st.checkbox("Show my birth year", value=False)
     birth_year = None
     if use_personal:
-        birth_year = st.number_input("Birth Year", value=1990, min_value=1900, max_value=2024, step=1)
+        birth_year = st.number_input(
+            "Birth Year", value=1990, min_value=1900,
+            max_value=datetime.now(timezone.utc).year, step=1,
+        )
 
 
 # ── Main content tabs ─────────────────────────────────────────────────────────
@@ -195,7 +197,7 @@ with tab2:
     st.markdown(f"""
     <div style="font-family: Space Mono; font-size:0.75rem; color:#8899bb; margin-bottom:12px;">
         Scale: 1 second of {SCALES[scale_name]['label']} = 
-        {UNIVERSE_AGE_YEARS / (SCALES[scale_name]['duration_s'] / 1) / 1e9 * 1e9:.0f} years of real time
+        {UNIVERSE_AGE_YEARS / SCALES[scale_name]['duration_s']:.0f} years of real time
         · Hover events for details · Scroll/zoom to explore
     </div>
     """, unsafe_allow_html=True)
@@ -203,18 +205,17 @@ with tab2:
     # Scale info metrics
     s_col1, s_col2, s_col3 = st.columns(3)
     with s_col1:
-        from src.timeline import SECONDS_PER_YEAR
         scale_duration = SCALES[scale_name]["duration_s"]
-        ratio = UNIVERSE_AGE_YEARS * 365.25 * 24 * 3600 / scale_duration
+        ratio = UNIVERSE_AGE_YEARS * SECONDS_PER_YEAR / scale_duration
         st.metric("Time Compression", f"{ratio/1e9:.2f} billion ×",
                   "Real seconds per scale second")
     with s_col2:
-        human_life_s = 80 * 365.25 * 24 * 3600
+        human_life_s = 80 * SECONDS_PER_YEAR
         human_in_scale = human_life_s / ratio
         st.metric("Your 80-year life", f"{human_in_scale*1000:.4f} ms",
                   f"On this {SCALES[scale_name]['label']} scale")
     with s_col3:
-        human_history_s = 10000 * 365.25 * 24 * 3600
+        human_history_s = 10000 * SECONDS_PER_YEAR
         history_in_scale = human_history_s / ratio
         st.metric("All of human civilization", f"{history_in_scale:.4f}s",
                   f"On this {SCALES[scale_name]['label']} scale")
@@ -292,7 +293,7 @@ with tab3:
 
     for label, years, desc in zoom_levels:
         pct_of_universe = years / UNIVERSE_AGE_YEARS * 100
-        cosmic_seconds = (years / UNIVERSE_AGE_YEARS) * 365.25 * 24 * 3600
+        cosmic_seconds = (years / UNIVERSE_AGE_YEARS) * SECONDS_PER_YEAR
         cosmic_ms = cosmic_seconds * 1000
 
         st.markdown(f"""
@@ -327,7 +328,7 @@ with tab3:
 
     for ev in sorted(human_events, key=lambda x: x["age_years"], reverse=True):
         cal = age_to_cosmic_year(ev["age_years"])
-        cosmic_seconds_ago = (ev["age_years"] / UNIVERSE_AGE_YEARS) * 365.25 * 24 * 3600
+        cosmic_seconds_ago = (ev["age_years"] / UNIVERSE_AGE_YEARS) * SECONDS_PER_YEAR
         color = CATEGORY_COLORS.get(ev.get("category"), "#aaaaaa")
 
         if cosmic_seconds_ago < 0.001:
@@ -387,7 +388,7 @@ with tab4:
         personal_year = st.number_input(
             "Birth Year",
             value=birth_year if birth_year else 1990,
-            min_value=1900, max_value=2024, step=1,
+            min_value=1900, max_value=datetime.now(timezone.utc).year, step=1,
             key="personal_birth_year"
         )
 
@@ -434,9 +435,9 @@ with tab4:
                     </td>
                 </tr>
                 <tr>
-                    <td style="color:#6677aa; padding:5px 0;">Universes that fit in your life</td>
+                    <td style="color:#6677aa; padding:5px 0;">80-year lives in the age of the universe</td>
                     <td style="color:#e8f0fe; text-align:right;">
-                        1 in {1/stats['universes_in_life']:.0f}
+                        {1/stats['universes_in_life']:,.0f}
                     </td>
                 </tr>
             </table>
@@ -457,7 +458,7 @@ with tab4:
             "🌌", "You vs. The Universe",
             f"The universe is {UNIVERSE_AGE_YEARS/age:.0f} times older than you.",
             f"If the universe were a 80-year-old person, you would have been born in the last "
-            f"{80 * age / UNIVERSE_AGE_YEARS * 365.25 * 24 * 3600:.2f} seconds of their life.",
+            f"{80 * age / UNIVERSE_AGE_YEARS * SECONDS_PER_YEAR:.2f} seconds of their life.",
         ),
         (
             "⭐", "You vs. The Stars",
